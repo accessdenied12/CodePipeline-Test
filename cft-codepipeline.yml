@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: 'CodePipeline stack for CloudFormation CD/Infrastructure as code'
+Metadata:
+  VersionDate: "2017-03-17"
+  Input:
+    Description: "CodePipeline stack for CloudFormation CD/Infrastructure as code"
+  AWS::Cloudformation::Interface:
+    ParameterGroups:
+     - Label:
+        Default: "CodePipeline Inputs"
+       Parameters:
+        - PipelineName
+     - Label:
+        Default: "Github Repo Inputs"
+       Parameters:
+        - GitHubUser
+        - GitHubToken
+        - GitHubRepo
+        - GitHubBranch
+     - Label:
+        Default: "CloudFormation Stack Inputs"
+       Parameters:
+        - TemplateFileName
+        - StackName
+        - StackConfig
+     - Label:
+        Default: "ChangeSet and Approval Inputs"
+       Parameters:
+        - ChangeSetName
+        - Email
+        - SMS
+
+
+
+Parameters:
+  PipelineName:
+    Description: A name for pipeline
+    Type: String
+  Email:
+    Description: Email for manual approval of ChangeSet
+    Type: String
+  SMS:
+    Description: SMS Number to alert for approval of ChangeSet
+    Type: String
+  GitHubToken:
+    Description: "Visit https://github.com/settings/tokens and generate a token and paste it here"
+    Type: String
+    NoEcho: True
+  GitHubUser:
+    Description: GitHub Username
+    Type: String
+    Default: "accessdenied12"
+  GitHubRepo:
+    Description: GitHub Repo - Name Only
+    Type: String
+    Default: "CodePipeline-Test"
+  GitHubBranch:
+    Description: Branch to use from Repo - Name Only
+    Type: String
+    Default: "master"
+  ChangeSetName:
+    Description: Name for the Changeset
+    Type: String
+  TemplateFileName:
+    Description: The file name of the CF template
+    Type: String
+  StackName:
+    Description: A name for the CF stack
+    Type: String
+  StackConfig:
+    Description: The configuration file name for CF stack
+    Type: String
+
+
+
+Resources:
+  ArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
+  CodePipelineSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref Email
+          Protocol: email
+        - Endpoint: !Ref SMS
+          Protocol: sms
+  CFNRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [cloudformation.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: CloudFormationRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - '*'
+                Effect: Allow
+                Resource: '*'
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [codepipeline.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: CodePipelineAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                - 's3:*'
+                - 'cloudformation:CreateStack'
+                - 'cloudformation:DescribeStacks'
+                - 'cloudformation:DeleteStack'
+                - 'cloudformation:UpdateStack'
+                - 'cloudformation:CreateChangeSet'
+                - 'cloudformation:ExecuteChangeSet'
+                - 'cloudformation:DeleteChangeSet'
+                - 'cloudformation:DescribeChangeSet'
+                - 'cloudformation:SetStackPolicy'
+                - 'iam:PassRole'
+                - 'sns:Publish'
+                - 'codecommit:BatchGetRepositories'
+                - 'codecommit:Get*'
+                - 'codecommit:GitPull'
+                - 'codecommit:List*'
+                - 'codecommit:Update*'
+                - 'codecommit:Test*'
+                - 'codecommit:UploadArchive'
+                Effect: Allow
+                Resource: '*'
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref 'ArtifactStoreBucket'
+        Type: S3
+    Name: !Ref PipelineName
+    RoleArn: !GetAtt [PipelineRole, Arn]
+    Stages:
+      - Name: Source
+        Actions: 
+          - Name: SourceAction
+            ActionTypeId: 
+              Category: Source
+              Owner: ThirdParty
+              Version: '1'
+              Provider: GitHub
+            OutputArtifacts: 
+              - Name: MyInputArtifacts
+            Configuration: 
+              Owner: !Ref GitHubUser
+              Repo: !Ref GitHubRepo
+              Branch: !Ref GitHubBranch
+              OAuthToken: !Ref GitHubToken
+            RunOrder: '1'
+      - Name: ChangeSetExecution
+        Actions: 
+          - Name: CreateChangeSet
+            ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              InputArtifacts:
+                - Name: MyInputArtifacts
+              Configuration:
+                Capabilities: CAPABILITY_NAMED_IAM
+                ActionMode: CHANGE_SET_REPLACE
+                RoleArn: !GetAtt [CFNRole, Arn]
+                StackName: !Ref StackName
+                ChangeSetName: !Ref ChangeSetName
+                TemplateConfiguration: !Sub "MyInputArtifacts::${StackConfig}"
+                TemplatePath: !Sub "MyInputArtifacts::${TemplateFileName}"
+              RunOrder: '1'
+          - Name: ApproveChangeSet
+            ActionTypeId:
+              Category: Approval
+              Owner: AWS
+              Provider: Manual
+              Version: '1'
+            Configuration:
+              NotificationArn: !Ref CodePipelineSNSTopic
+              CustomData: !Sub 'A new change set has been commited for the stack ${StackName} that requires your approval.'
+            RunOrder: '2'
+          - Name: ExecuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              Configuration:
+                Capabilities: CAPABILITY_NAMED_IAM
+                ActionMode: CHANGE_SET_EXECUTE
+                ChangeSetName: !Ref ChangeSetName
+                RoleArn: !GetAtt [CFNRole, Arn]
+                StackName: !Ref StackName
+              RunOrder: '3'
+            
+
+
