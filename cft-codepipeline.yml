@@ -202,18 +202,18 @@ Resources:
               CustomData: !Sub 'A new change set has been commited for the stack ${StackName} that requires your approval.'
             RunOrder: '2'
           - Name: ExecuteChangeSet
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: CloudFormation
-                Version: '1'
-              Configuration:
-                Capabilities: CAPABILITY_NAMED_IAM
-                ActionMode: CHANGE_SET_EXECUTE
-                ChangeSetName: !Ref ChangeSetName
-                RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Ref StackName
-              RunOrder: '3'
+            ActionTypeId:
+              Category: Deploy
+              Owner: AWS
+              Provider: CloudFormation
+              Version: '1'
+            Configuration:
+              Capabilities: CAPABILITY_NAMED_IAM
+              ActionMode: CHANGE_SET_EXECUTE
+              ChangeSetName: !Ref ChangeSetName
+              RoleArn: !GetAtt [CFNRole, Arn]
+              StackName: !Ref StackName
+            RunOrder: '3'
             
 
 
