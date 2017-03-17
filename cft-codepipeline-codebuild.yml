@@ -204,8 +204,8 @@ Resources:
                RoleArn: !GetAtt [CFNRole, Arn]
                StackName: !Ref StackName
                ChangeSetName: !Ref ChangeSetName
-               TemplateConfiguration: !Sub "MyInputArtifacts::${StackConfig}"
-               TemplatePath: !Sub "MyInputArtifacts::${TemplateFileName}"
+               TemplateConfiguration: !Sub "MyInputArtifactsBuilt::${StackConfig}"
+               TemplatePath: !Sub "MyInputArtifactsBuilt::${TemplateFileName}"
              RunOrder: '1'
            - Name: ApproveChangeSet
              ActionTypeId:
