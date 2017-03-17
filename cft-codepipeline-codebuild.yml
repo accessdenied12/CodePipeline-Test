@@ -147,6 +147,9 @@ Resources:
                 - 'codecommit:UploadArchive'
                 - 'cloudwatch:*'
                 - 'codebuild:*'
+                - 'logs:CreateLogGroup'
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
                 Effect: Allow
                 Resource: '*'
   Pipeline:
