@@ -2,4 +2,4 @@ version: 0.1
 phases:
   build:
     commands:
-       - aws s3 sync . s3://$TEMPLATE_DEPLOYMENT_BUCKET/ --region $REGION 
+       - aws s3 sync . s3://$TEMPLATE_DEPLOYMENT_BUCKET/ 
