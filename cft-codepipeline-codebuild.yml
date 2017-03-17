@@ -145,7 +145,7 @@ Resources:
                 - 'codecommit:Update*'
                 - 'codecommit:Test*'
                 - 'codecommit:UploadArchive'
-		- 'codebuild:*'
+                - 'codebuild:*'
                 Effect: Allow
                 Resource: '*'
   Pipeline:
