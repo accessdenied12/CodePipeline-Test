@@ -4,7 +4,7 @@
     "CidrBlock" : "172.48.29.0/24",
     "VPCName" : "Arthur-WP-Test",
     "PublicSubnet1" : "172.48.29.0/28",
-    "PrivateSubnet1" : "172.48.29.16/28",
+    "PrivateSubnet1" : "172.48.29.64/28",
     "PrivateSubnet2" : "172.48.29.32/28",
     "SGName" : "Arthur-WP-Test",
     "EC2Tag" : "Arthur-WP-Test",
