@@ -180,17 +180,17 @@ Resources:
                 Owner: AWS
                 Provider: CloudFormation
                 Version: '1'
-              InputArtifacts:
-                - Name: MyInputArtifacts
-              Configuration:
-                Capabilities: CAPABILITY_NAMED_IAM
-                ActionMode: CHANGE_SET_REPLACE
-                RoleArn: !GetAtt [CFNRole, Arn]
-                StackName: !Ref StackName
-                ChangeSetName: !Ref ChangeSetName
-                TemplateConfiguration: !Sub "MyInputArtifacts::${StackConfig}"
-                TemplatePath: !Sub "MyInputArtifacts::${TemplateFileName}"
-              RunOrder: '1'
+            InputArtifacts:
+              - Name: MyInputArtifacts
+            Configuration:
+              Capabilities: CAPABILITY_NAMED_IAM
+              ActionMode: CHANGE_SET_REPLACE
+              RoleArn: !GetAtt [CFNRole, Arn]
+              StackName: !Ref StackName
+              ChangeSetName: !Ref ChangeSetName
+              TemplateConfiguration: !Sub "MyInputArtifacts::${StackConfig}"
+              TemplatePath: !Sub "MyInputArtifacts::${TemplateFileName}"
+            RunOrder: '1'
           - Name: ApproveChangeSet
             ActionTypeId:
               Category: Approval
