@@ -3,4 +3,5 @@ phases:
   build:
     commands:
        - export BUCKET_REGION='aws s3api get-bucket-location --bucket $TEMPLATE_DEPLOYMENT_BUCKET'
+       - echo $BUCKET_REGION
        - aws s3 sync . s3://$TEMPLATE_DEPLOYMENT_BUCKET/ --region $BUCKET_REGION
