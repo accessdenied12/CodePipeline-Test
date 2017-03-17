@@ -2,6 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: 'CodePipeline stack for CloudFormation CD/Infrastructure as code'
 Metadata:
   VersionDate: "2017-03-17"
+  Author: "Arthur Mandel (arthur@flux7.com)"
   Input:
     Description: "CodePipeline stack for CloudFormation CD/Infrastructure as code"
   AWS::Cloudformation::Interface:
